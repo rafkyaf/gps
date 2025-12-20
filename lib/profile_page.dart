@@ -1,87 +1,226 @@
 import 'package:flutter/material.dart';
-// ignore: unused_import
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'edit_profil_page.dart';
+import 'login_screen.dart'; // Untuk navigasi logout
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Ambil User yang sedang login
+    final user = FirebaseAuth.instance.currentUser;
+
+    // Jika entah kenapa user tidak ada (belum login), kembalikan ke login
+    if (user == null) {
+      return const Center(child: Text("Silakan login terlebih dahulu"));
+    }
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Profil Pengguna"),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
+      backgroundColor: Colors.grey[100],
+      // StreamBuilder memantau dokumen di koleksi 'users' milik UID ini
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .snapshots(),
+        builder: (context, snapshot) {
+          // 1. Saat loading
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          // 2. Jika error
+          if (snapshot.hasError) {
+            return const Center(child: Text("Terjadi kesalahan memuat data."));
+          }
+
+          // 3. Jika data tidak ditemukan
+          if (!snapshot.hasData || !snapshot.data!.exists) {
+            return const Center(child: Text("Data profil tidak ditemukan."));
+          }
+
+          // 4. Ambil data dari snapshot
+          var userData = snapshot.data!.data() as Map<String, dynamic>;
+
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                // === HEADER PROFILE ===
+                Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      height: 200,
+                      width: double.infinity,
+                      decoration: const BoxDecoration(
+                        color: Colors.redAccent,
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(30),
+                          bottomRight: Radius.circular(30),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 130,
+                      child: CircleAvatar(
+                        radius: 65,
+                        backgroundColor: Colors.white,
+                        child: CircleAvatar(
+                          radius: 60,
+                          // --- LOGIKA BARU DI SINI ---
+                          // Cek apakah gambar berupa Link Internet (http) atau Aset Lokal (assets/)
+                          backgroundImage:
+                              (userData['image'] != null &&
+                                  userData['image'].toString().isNotEmpty)
+                              ? (userData['image'].toString().startsWith('http')
+                                    ? NetworkImage(
+                                        userData['image'],
+                                      ) // Jika link internet
+                                    : AssetImage(userData['image'])
+                                          as ImageProvider) // Jika aset lokal
+                              : const AssetImage(
+                                  'assets/images/profile_default.png',
+                                ), // Default
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 70),
+
+                // Nama & Status
+                Text(
+                  userData['name'] ?? "User",
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  userData['email'] ?? "-",
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                const SizedBox(height: 20),
+
+                // === CARD DETAIL ===
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildProfileItem(
+                          Icons.email,
+                          "Email",
+                          userData['email'] ?? "-",
+                        ),
+                        const Divider(height: 1),
+                        _buildProfileItem(
+                          Icons.phone,
+                          "Nomor HP",
+                          userData['phone'] ?? "-",
+                        ),
+                        const Divider(height: 1),
+                        _buildProfileItem(
+                          Icons.location_on,
+                          "Alamat",
+                          userData['address'] ?? "-",
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 30),
+
+                // Tombol Edit
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent,
+                      minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const EditProfilePage(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.edit, color: Colors.white),
+                    label: const Text(
+                      "Edit Profil",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 15),
+
+                // Tombol Logout
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 50),
+                      side: const BorderSide(color: Colors.redAccent),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () async {
+                      await FirebaseAuth.instance.signOut();
+                      if (context.mounted) {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const LoginScreen(),
+                          ),
+                          (route) => false,
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.logout, color: Colors.redAccent),
+                    label: const Text(
+                      "Keluar",
+                      style: TextStyle(color: Colors.redAccent, fontSize: 16),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 30),
+              ],
+            ),
+          );
+        },
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          const Center(
-            child: CircleAvatar(
-              radius: 55,
-              backgroundImage: AssetImage('assets/images/profile_default.png'),
-            ),
-          ),
-          const SizedBox(height: 20),
+    );
+  }
 
-          // Nama
-          const Text(
-            "Nama Lengkap",
-            style: TextStyle(fontSize: 14, color: Colors.grey),
-          ),
-          const Text(
-            "Rafky A.",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const Divider(height: 30),
-
-          // Email
-          const Text(
-            "Email",
-            style: TextStyle(fontSize: 14, color: Colors.grey),
-          ),
-          const Text("user@gmail.com", style: TextStyle(fontSize: 16)),
-          const Divider(height: 30),
-
-          // Nomor HP
-          const Text(
-            "Nomor HP",
-            style: TextStyle(fontSize: 14, color: Colors.grey),
-          ),
-          const Text("+62 812 3456 7890", style: TextStyle(fontSize: 16)),
-          const Divider(height: 30),
-
-          // Alamat
-          const Text(
-            "Alamat",
-            style: TextStyle(fontSize: 14, color: Colors.grey),
-          ),
-          const Text("Sleman, Yogyakarta", style: TextStyle(fontSize: 16)),
-          const Divider(height: 30),
-
-          // Tombol Edit Profil
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const EditProfilePage()),
-              );
-            },
-            child: const Text(
-              "Edit Profil",
-              style: TextStyle(color: Colors.white, fontSize: 16),
-            ),
-          ),
-        ],
+  Widget _buildProfileItem(IconData icon, String title, String value) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.redAccent),
+      title: Text(
+        title,
+        style: const TextStyle(fontSize: 12, color: Colors.grey),
+      ),
+      subtitle: Text(
+        value,
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
       ),
     );
   }
