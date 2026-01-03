@@ -5,15 +5,6 @@ import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
-///
-/// Example:
-/// ```dart
-/// import 'firebase_options.dart';
-/// // ...
-/// await Firebase.initializeApp(
-///   options: DefaultFirebaseOptions.currentPlatform,
-/// );
-/// ```
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
@@ -40,6 +31,7 @@ class DefaultFirebaseOptions {
     }
   }
 
+  // Config Web (Biarkan atau hapus tidak masalah karena kita fokus Android)
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyA2BQmuukqUTJT4rns11noZzlnL6zYz0qQ',
     appId: '1:332251256272:web:e0c991ede3c69dafc195d5',
@@ -50,14 +42,19 @@ class DefaultFirebaseOptions {
     measurementId: 'G-NTC6S4YQVN',
   );
 
+  // Data diambil dari google-services.json project 'gpscollab'
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBMJ7tQkqjUaL2cQMqq-KRUfu1Ee52y1hM',
-    appId: '1:332251256272:android:2610ff264939e9f7c195d5',
-    messagingSenderId: '332251256272',
-    projectId: 'gps-tracker-45c2e',
-    storageBucket: 'gps-tracker-45c2e.firebasestorage.app',
+    apiKey: 'AIzaSyBFdw-X-shY74QS2GL5nOz8i0ppa20TBks', // Dari JSON baru
+    appId: '1:1069303062412:android:19cbfba668e900705e40a9', // Dari JSON baru
+    messagingSenderId: '1069303062412', // Dari JSON baru
+    projectId: 'gpscollab', // Project kolaborasi
+    storageBucket: 'gpscollab.firebasestorage.app',
+    // Penting! Tambahkan URL database karena servernya di Asia
+    databaseURL:
+        'https://gpscollab-default-rtdb.asia-southeast1.firebasedatabase.app',
   );
 
+  // Config iOS (Masih project lama, minta GoogleService-Info.plist jika mau update iOS)
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBL4JU7uQOqa0hCs68zkZLbsGJD-By7PnI',
     appId: '1:332251256272:ios:fc92bb19406d3644c195d5',

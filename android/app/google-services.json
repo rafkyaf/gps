@@ -1,13 +1,14 @@
 {
   "project_info": {
-    "project_number": "332251256272",
-    "project_id": "gps-tracker-45c2e",
-    "storage_bucket": "gps-tracker-45c2e.firebasestorage.app"
+    "project_number": "1069303062412",
+    "firebase_url": "https://gpscollab-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "gpscollab",
+    "storage_bucket": "gpscollab.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:332251256272:android:2610ff264939e9f7c195d5",
+        "mobilesdk_app_id": "1:1069303062412:android:19cbfba668e900705e40a9",
         "android_client_info": {
           "package_name": "com.example.gps_tracker"
         }
@@ -15,7 +16,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBMJ7tQkqjUaL2cQMqq-KRUfu1Ee52y1hM"
+          "current_key": "AIzaSyBFdw-X-shY74QS2GL5nOz8i0ppa20TBks"
         }
       ],
       "services": {
